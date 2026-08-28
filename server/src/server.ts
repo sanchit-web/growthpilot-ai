@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { createPaymentLink } from "./services/razorpay.service.js";
 import webhookRoutes from "./routes/webhook.routes.js";
+import growthRoutes from "./routes/growth.routes.js";
 
 
 dotenv.config();
@@ -18,6 +19,8 @@ app.use(
 );
 
 app.use(express.json());
+
+app.use("/api/growth", growthRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({
