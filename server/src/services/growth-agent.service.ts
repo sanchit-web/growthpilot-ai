@@ -9,6 +9,8 @@ export function createGrowthAction(
   opportunity: GrowthOpportunity
 ): GrowthAction {
   const action: GrowthAction = {
+    id: `action_${Date.now()}`,
+
     actionType: opportunity.actionType,
 
     title: opportunity.title,

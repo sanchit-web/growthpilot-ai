@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const GrowthActionSchema = z.object({
+  id: z.string(),
+
   actionType: z.enum([
     "CROSS_SELL",
     "UPSELL",
