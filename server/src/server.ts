@@ -1,12 +1,15 @@
+import "dotenv/config";
+
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+
 import { createPaymentLink } from "./services/razorpay.service.js";
 import webhookRoutes from "./routes/webhook.routes.js";
 import growthRoutes from "./routes/growth.routes.js";
 
 
-dotenv.config();
+
 
 
 
