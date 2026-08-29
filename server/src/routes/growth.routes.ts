@@ -56,6 +56,28 @@ router.post("/action", async (req, res) => {
   }
 });
 
+router.get("/actions", async (_req, res) => {
+  try {
+    const actions = await prisma.growthAction.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      actions,
+    });
+  } catch (error) {
+    console.error("Growth actions fetch error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch growth actions",
+    });
+  }
+});
+
 router.post("/action/:id/approve", async (req, res) => {
   try {
     const action = await prisma.growthAction.findUnique({
