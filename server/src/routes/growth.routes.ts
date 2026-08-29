@@ -194,4 +194,29 @@ router.post("/action/:id/execute", async (req, res) => {
   }
 });
 
+router.get("/recommendations", async (_req, res) => {
+  try {
+    const recommendations = await prisma.growthAction.findMany({
+      where: {
+        status: "EXECUTED",
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      recommendations,
+    });
+  } catch (error) {
+    console.error("Recommendation fetch error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch recommendations",
+    });
+  }
+});
+
 export default router;
