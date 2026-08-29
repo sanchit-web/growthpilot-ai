@@ -2,17 +2,13 @@ import { Router } from "express";
 import { MerchantDataSchema } from "../types/merchant.js";
 import { generateGrowthOpportunity } from "../services/growth-ai.service.js";
 import { createGrowthAction } from "../services/growth-agent.service.js";
-import {
-  approveGrowthAction,
-  rejectGrowthAction,
-} from "../services/action-approval.service.js";
-import { GrowthAction } from "../types/action.js";
+import { prisma } from "../config/prisma.js";
+
 
 const router = Router();
 
-// Temporary in-memory action store.
-// We will replace this with PostgreSQL later.
-const actions = new Map<string, GrowthAction>();
+
+
 
 router.post("/analyze", async (req, res) => {
   try {
@@ -42,9 +38,7 @@ router.post("/action", async (req, res) => {
     const opportunity =
       await generateGrowthOpportunity(merchant);
 
-    const action = createGrowthAction(opportunity);
-
-    actions.set(action.id, action);
+     const action = await createGrowthAction(opportunity);
 
     return res.status(200).json({
       success: true,
@@ -61,9 +55,13 @@ router.post("/action", async (req, res) => {
   }
 });
 
-router.post("/action/:id/approve", (req, res) => {
+router.post("/action/:id/approve", async (req, res) => {
   try {
-    const action = actions.get(req.params.id);
+    const action = await prisma.growthAction.findUnique({
+      where: {
+        id: req.params.id,
+      },
+    });
 
     if (!action) {
       return res.status(404).json({
@@ -72,9 +70,14 @@ router.post("/action/:id/approve", (req, res) => {
       });
     }
 
-    const approvedAction = approveGrowthAction(action);
-
-    actions.set(approvedAction.id, approvedAction);
+    const approvedAction = await prisma.growthAction.update({
+      where: {
+        id: req.params.id,
+      },
+      data: {
+        status: "APPROVED",
+      },
+    });
 
     return res.status(200).json({
       success: true,
@@ -90,9 +93,13 @@ router.post("/action/:id/approve", (req, res) => {
   }
 });
 
-router.post("/action/:id/reject", (req, res) => {
+router.post("/action/:id/reject", async (req, res) => {
   try {
-    const action = actions.get(req.params.id);
+    const action = await prisma.growthAction.findUnique({
+      where: {
+        id: req.params.id,
+      },
+    });
 
     if (!action) {
       return res.status(404).json({
@@ -101,9 +108,14 @@ router.post("/action/:id/reject", (req, res) => {
       });
     }
 
-    const rejectedAction = rejectGrowthAction(action);
-
-    actions.set(rejectedAction.id, rejectedAction);
+    const rejectedAction = await prisma.growthAction.update({
+      where: {
+        id: req.params.id,
+      },
+      data: {
+        status: "REJECTED",
+      },
+    });
 
     return res.status(200).json({
       success: true,
