@@ -5,6 +5,12 @@ export type GrowthExecutionResult = {
   actionId: string;
   executionType: string;
   message: string;
+
+  recommendation?: {
+    targetProduct: string;
+    suggestedProduct: string;
+    placement: string;
+  };
 };
 
 export async function executeGrowthAction(
@@ -17,13 +23,25 @@ export async function executeGrowthAction(
   }
 
   switch (action.actionType) {
-    case "CROSS_SELL":
+    case "CROSS_SELL": {
+      if (!action.targetProduct || !action.suggestedProduct) {
+        throw new Error(
+          "Cross-sell action requires target and suggested products"
+        );
+      }
+
       return {
         success: true,
         actionId: action.id,
         executionType: "PRODUCT_RECOMMENDATION",
         message: `Cross-sell recommendation activated: ${action.suggestedProduct}`,
+        recommendation: {
+          targetProduct: action.targetProduct,
+          suggestedProduct: action.suggestedProduct,
+          placement: "PRODUCT_PAGE",
+        },
       };
+    }
 
     case "UPSELL":
       return {
