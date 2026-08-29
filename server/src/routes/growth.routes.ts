@@ -3,6 +3,7 @@ import { MerchantDataSchema } from "../types/merchant.js";
 import { generateGrowthOpportunity } from "../services/growth-ai.service.js";
 import { createGrowthAction } from "../services/growth-agent.service.js";
 import { prisma } from "../config/prisma.js";
+import { executeGrowthAction } from "../services/growth-execution.service.js";
 
 
 const router = Router();
@@ -127,6 +128,68 @@ router.post("/action/:id/reject", async (req, res) => {
     return res.status(400).json({
       success: false,
       message: "Unable to reject growth action",
+    });
+  }
+});
+
+router.post("/action/:id/execute", async (req, res) => {
+  try {
+    const action = await prisma.growthAction.findUnique({
+      where: {
+        id: req.params.id,
+      },
+    });
+
+    if (!action) {
+      return res.status(404).json({
+        success: false,
+        message: "Growth action not found",
+      });
+    }
+
+    if (action.status !== "APPROVED") {
+      return res.status(400).json({
+        success: false,
+        message: `Action cannot be executed from status: ${action.status}`,
+      });
+    }
+
+    const result = await executeGrowthAction({
+      ...action,
+      targetProduct: action.targetProduct ?? undefined,
+      suggestedProduct: action.suggestedProduct ?? null,
+      status: action.status as
+        | "PROPOSED"
+        | "APPROVED"
+        | "EXECUTED"
+        | "REJECTED",
+      actionType: action.actionType as
+        | "CROSS_SELL"
+        | "UPSELL"
+        | "CAMPAIGN"
+        | "RETENTION",
+    });
+
+    const executedAction = await prisma.growthAction.update({
+      where: {
+        id: req.params.id,
+      },
+      data: {
+        status: "EXECUTED",
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      result,
+      action: executedAction,
+    });
+  } catch (error) {
+    console.error("Growth action execution error:", error);
+
+    return res.status(400).json({
+      success: false,
+      message: "Unable to execute growth action",
     });
   }
 });
