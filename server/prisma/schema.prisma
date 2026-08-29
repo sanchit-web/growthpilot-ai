@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model GrowthAction {
+  id               String   @id
+  actionType       String
+  title            String
+  description      String
+  targetProduct    String?
+  suggestedProduct String?
+  status           String
+  requiresApproval Boolean
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
