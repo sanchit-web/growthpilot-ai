@@ -11,6 +11,11 @@ export type GrowthExecutionResult = {
     suggestedProduct: string;
     placement: string;
   };
+
+  details?: {
+    status: string;
+    executedAt: string;
+  };
 };
 
 export async function executeGrowthAction(
@@ -21,6 +26,8 @@ export async function executeGrowthAction(
       `Action cannot be executed from status: ${action.status}`
     );
   }
+
+  const executedAt = new Date().toISOString();
 
   switch (action.actionType) {
     case "CROSS_SELL": {
@@ -40,32 +47,57 @@ export async function executeGrowthAction(
           suggestedProduct: action.suggestedProduct,
           placement: "PRODUCT_PAGE",
         },
+        details: {
+          status: "ACTIVATED",
+          executedAt,
+        },
       };
     }
 
-    case "UPSELL":
+    case "UPSELL": {
+      if (!action.targetProduct) {
+        throw new Error(
+          "Upsell action requires a target product"
+        );
+      }
+
       return {
         success: true,
         actionId: action.id,
         executionType: "UPSELL_RECOMMENDATION",
         message: `Upsell recommendation activated for ${action.targetProduct}`,
+        details: {
+          status: "ACTIVATED",
+          executedAt,
+        },
       };
+    }
 
-    case "CAMPAIGN":
+    case "CAMPAIGN": {
       return {
         success: true,
         actionId: action.id,
         executionType: "CAMPAIGN",
         message: "Growth campaign activated",
+        details: {
+          status: "ACTIVATED",
+          executedAt,
+        },
       };
+    }
 
-    case "RETENTION":
+    case "RETENTION": {
       return {
         success: true,
         actionId: action.id,
         executionType: "RETENTION_CAMPAIGN",
         message: "Retention campaign activated",
+        details: {
+          status: "ACTIVATED",
+          executedAt,
+        },
       };
+    }
 
     default:
       throw new Error(
