@@ -21,6 +21,13 @@ app.use(
   })
 );
 
+// Razorpay webhook must receive the raw request body
+app.use(
+  "/api/webhooks",
+  express.raw({ type: "application/json" }),
+  webhookRoutes
+);
+
 app.use(express.json());
 
 app.use("/api/growth", growthRoutes);
@@ -56,7 +63,7 @@ app.post("/api/test/payment-link", async (_req, res) => {
   }
 });
 
-app.use("/api/webhooks", webhookRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 

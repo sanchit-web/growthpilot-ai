@@ -193,14 +193,17 @@ router.post("/action/:id/execute", async (req, res) => {
     });
 
     const executedAction = await prisma.growthAction.update({
-      where: {
-        id: req.params.id,
-      },
-      data: {
-        status: "EXECUTED",
-        executionResult: result,
-      },
-    });
+  where: {
+    id: req.params.id,
+  },
+  data: {
+    status: "EXECUTED",
+    executionResult: result,
+
+    paymentLinkId: result.paymentLink?.id,
+    paymentStatus: result.paymentLink?.status,
+  },
+});
 
     return res.status(200).json({
       success: true,

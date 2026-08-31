@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import GrowthAnalyzer from "@/components/GrowthAnalyzer";
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 type GrowthAction = {
   id: string;
   actionType: string;
@@ -12,8 +15,28 @@ type GrowthAction = {
   suggestedProduct?: string | null;
   status: "PROPOSED" | "APPROVED" | "EXECUTED" | "REJECTED";
   requiresApproval: boolean;
+
+  paymentLinkId?: string | null;
+  paymentStatus?: string | null;
+
   createdAt: string;
   updatedAt: string;
+
+  executionResult?: {
+    success: boolean;
+    executionType: string;
+    message: string;
+    recommendation?: {
+      targetProduct: string;
+      suggestedProduct: string;
+      placement: string;
+    };
+    paymentLink?: {
+     id: string;
+    shortUrl: string;
+    status: string;
+   };
+  } | null;
 };
 
 export default function Home() {
@@ -25,7 +48,7 @@ export default function Home() {
   const fetchActions = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/growth/actions"
+        `${API_URL}/api/growth/actions`
       );
 
       const data = await response.json();
@@ -52,7 +75,7 @@ export default function Home() {
       setUpdatingAction(id);
 
       const response = await fetch(
-        `http://localhost:5000/api/growth/action/${id}/${action}`,
+        `${API_URL}/api/growth/action/${id}/${action}`,
         {
           method: "POST",
         }
@@ -66,11 +89,23 @@ export default function Home() {
 
       setActions((current) =>
         current.map((item) =>
-          item.id === id ? data.action : item
+          item.id === id
+            ? {
+                ...item,
+                ...data.action,
+
+                // Store execution result returned by backend
+                executionResult:
+                  action === "execute"
+                    ? data.result ?? null
+                    : item.executionResult ?? null,
+              }
+            : item
         )
       );
     } catch (error) {
       console.error("Failed to update action:", error);
+
       alert(
         error instanceof Error
           ? error.message
@@ -148,6 +183,7 @@ export default function Home() {
           </div>
 
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+
             {loading ? (
               <div className="p-6 text-gray-500">
                 Loading actions...
@@ -164,6 +200,7 @@ export default function Home() {
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
+
                 {actions.map((action) => (
                   <div
                     key={action.id}
@@ -171,8 +208,9 @@ export default function Home() {
                   >
                     <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
 
-                      {/* Action information */}
+                      {/* Action Information */}
                       <div className="min-w-0 flex-1">
+
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-semibold text-gray-900">
                             {action.title}
@@ -187,7 +225,9 @@ export default function Home() {
                           {action.description}
                         </p>
 
+                        {/* Product information */}
                         <div className="mt-3 flex flex-wrap gap-2 text-sm">
+
                           {action.targetProduct && (
                             <span className="rounded-md bg-gray-50 px-3 py-1 text-gray-600">
                               Target: {action.targetProduct}
@@ -199,6 +239,7 @@ export default function Home() {
                               Suggested: {action.suggestedProduct}
                             </span>
                           )}
+
                         </div>
 
                         <p className="mt-3 text-xs text-gray-400">
@@ -207,18 +248,112 @@ export default function Home() {
                             action.createdAt
                           ).toLocaleString()}
                         </p>
+
+                        {/* Execution Result */}
+                        {action.status === "EXECUTED" &&
+  action.executionResult && (
+    <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+
+      <div className="flex items-center gap-2">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black text-xs text-white">
+          ✓
+        </span>
+
+        <div>
+          <p className="text-sm font-semibold text-gray-900">
+            Action Executed
+          </p>
+
+          <p className="text-xs text-gray-500">
+            {action.executionResult.executionType}
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-3 text-sm text-gray-700">
+        {action.executionResult.message}
+      </p>
+
+      {/* Payment Status */}
+      {action.paymentStatus && (
+        <div className="mt-4 rounded-lg bg-white p-3">
+          <p className="text-xs text-gray-400">
+            Payment Status
+          </p>
+
+          <p className="mt-1 text-sm font-semibold text-gray-800">
+            {action.paymentStatus.toUpperCase()}
+          </p>
+        </div>
+      )}
+
+      {action.executionResult.recommendation && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+
+          <div className="rounded-lg bg-white p-3">
+            <p className="text-xs text-gray-400">
+              Target Product
+            </p>
+
+            <p className="mt-1 text-sm font-medium text-gray-800">
+              {
+                action.executionResult
+                  .recommendation
+                  .targetProduct
+              }
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-white p-3">
+            <p className="text-xs text-gray-400">
+              Suggested Product
+            </p>
+
+            <p className="mt-1 text-sm font-medium text-gray-800">
+              {
+                action.executionResult
+                  .recommendation
+                  .suggestedProduct
+              }
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-white p-3">
+            <p className="text-xs text-gray-400">
+              Placement
+            </p>
+
+            <p className="mt-1 text-sm font-medium text-gray-800">
+              {
+                action.executionResult
+                  .recommendation
+                  .placement
+              }
+            </p>
+          </div>
+
+        </div>
+      )}
+
+    </div>
+  )}
+
                       </div>
 
                       {/* Status + Actions */}
                       <div className="flex shrink-0 flex-col items-start gap-3 md:items-end">
+
                         <StatusBadge status={action.status} />
 
-                        {/* Proposed actions */}
+                        {/* Proposed */}
                         {action.status === "PROPOSED" && (
                           <div className="flex gap-2">
+
                             <button
                               type="button"
-                              disabled={updatingAction === action.id}
+                              disabled={
+                                updatingAction === action.id
+                              }
                               onClick={() =>
                                 updateActionStatus(
                                   action.id,
@@ -234,7 +369,9 @@ export default function Home() {
 
                             <button
                               type="button"
-                              disabled={updatingAction === action.id}
+                              disabled={
+                                updatingAction === action.id
+                              }
                               onClick={() =>
                                 updateActionStatus(
                                   action.id,
@@ -245,14 +382,17 @@ export default function Home() {
                             >
                               Reject
                             </button>
+
                           </div>
                         )}
 
-                        {/* Approved action */}
+                        {/* Approved */}
                         {action.status === "APPROVED" && (
                           <button
                             type="button"
-                            disabled={updatingAction === action.id}
+                            disabled={
+                              updatingAction === action.id
+                            }
                             onClick={() =>
                               updateActionStatus(
                                 action.id,
@@ -269,10 +409,23 @@ export default function Home() {
 
                         {/* Executed */}
                         {action.status === "EXECUTED" && (
-                          <span className="text-xs font-medium text-gray-500">
-                            Action completed
-                          </span>
-                        )}
+  <div className="flex flex-col items-start gap-2 md:items-end">
+    <span className="text-xs font-medium text-gray-500">
+      Action completed
+    </span>
+
+    {action.executionResult?.paymentLink?.shortUrl && (
+      <a
+        href={action.executionResult.paymentLink.shortUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+      >
+        Open Razorpay Payment Link
+      </a>
+    )}
+  </div>
+)}
 
                         {/* Rejected */}
                         {action.status === "REJECTED" && (
@@ -280,16 +433,19 @@ export default function Home() {
                             Action rejected
                           </span>
                         )}
+
                       </div>
                     </div>
                   </div>
                 ))}
+
               </div>
             )}
+
           </div>
         </div>
 
-        {/* Analyze Business Button */}
+        {/* Analyze Business */}
         <div className="mt-10 flex justify-end">
           <button
             type="button"
@@ -299,6 +455,7 @@ export default function Home() {
             + Analyze New Business
           </button>
         </div>
+
       </div>
 
       {/* Analyzer Modal */}
@@ -311,6 +468,7 @@ export default function Home() {
             className="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
+
             <button
               type="button"
               onClick={() => setShowAnalyzer(false)}
@@ -323,9 +481,11 @@ export default function Home() {
               onCreated={fetchActions}
               onClose={() => setShowAnalyzer(false)}
             />
+
           </div>
         </div>
       )}
+
     </main>
   );
 }
@@ -356,14 +516,10 @@ function StatusBadge({
   status: GrowthAction["status"];
 }) {
   const styles = {
-    PROPOSED:
-      "bg-gray-100 text-gray-700",
-    APPROVED:
-      "bg-gray-200 text-gray-800",
-    EXECUTED:
-      "bg-black text-white",
-    REJECTED:
-      "bg-gray-100 text-gray-500",
+    PROPOSED: "bg-gray-100 text-gray-700",
+    APPROVED: "bg-gray-200 text-gray-800",
+    EXECUTED: "bg-black text-white",
+    REJECTED: "bg-gray-100 text-gray-500",
   };
 
   return (
