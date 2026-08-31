@@ -198,6 +198,7 @@ router.post("/action/:id/execute", async (req, res) => {
       },
       data: {
         status: "EXECUTED",
+        executionResult: result,
       },
     });
 

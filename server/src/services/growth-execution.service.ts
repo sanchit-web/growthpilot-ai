@@ -1,4 +1,5 @@
 import { GrowthAction } from "../types/action.js";
+import { createPaymentLink } from "./razorpay.service.js";
 
 export type GrowthExecutionResult = {
   success: boolean;
@@ -10,6 +11,12 @@ export type GrowthExecutionResult = {
     targetProduct: string;
     suggestedProduct: string;
     placement: string;
+  };
+
+    paymentLink?: {
+    id: string;
+    shortUrl: string;
+    status: string;
   };
 
   details?: {
@@ -37,16 +44,35 @@ export async function executeGrowthAction(
         );
       }
 
+      // Create a real Razorpay payment link in test mode
+      const paymentLink = await createPaymentLink({
+        amount: 10000, // ₹100 in paise - test/demo amount
+        description: `Cross-sell: ${action.suggestedProduct}`,
+        referenceId: action.id,
+        
+      });
+
+      console.log("RAZORPAY PAYMENT LINK:", paymentLink);
+
       return {
         success: true,
         actionId: action.id,
         executionType: "PRODUCT_RECOMMENDATION",
+
         message: `Cross-sell recommendation activated: ${action.suggestedProduct}`,
+
         recommendation: {
           targetProduct: action.targetProduct,
           suggestedProduct: action.suggestedProduct,
           placement: "PRODUCT_PAGE",
         },
+
+        paymentLink: {
+  id: paymentLink.id,
+  shortUrl: paymentLink.short_url,
+  status: paymentLink.status,
+},
+
         details: {
           status: "ACTIVATED",
           executedAt,
@@ -65,7 +91,9 @@ export async function executeGrowthAction(
         success: true,
         actionId: action.id,
         executionType: "UPSELL_RECOMMENDATION",
+
         message: `Upsell recommendation activated for ${action.targetProduct}`,
+
         details: {
           status: "ACTIVATED",
           executedAt,
@@ -78,7 +106,9 @@ export async function executeGrowthAction(
         success: true,
         actionId: action.id,
         executionType: "CAMPAIGN",
+
         message: "Growth campaign activated",
+
         details: {
           status: "ACTIVATED",
           executedAt,
@@ -91,7 +121,9 @@ export async function executeGrowthAction(
         success: true,
         actionId: action.id,
         executionType: "RETENTION_CAMPAIGN",
+
         message: "Retention campaign activated",
+
         details: {
           status: "ACTIVATED",
           executedAt,

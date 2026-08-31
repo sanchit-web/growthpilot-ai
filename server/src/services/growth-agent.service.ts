@@ -22,8 +22,17 @@ export async function createGrowthAction(
   const validatedAction = GrowthActionSchema.parse(action);
 
   await prisma.growthAction.create({
-    data: validatedAction,
-  });
+  data: {
+    id: validatedAction.id,
+    actionType: validatedAction.actionType,
+    title: validatedAction.title,
+    description: validatedAction.description,
+    targetProduct: validatedAction.targetProduct,
+    suggestedProduct: validatedAction.suggestedProduct,
+    status: validatedAction.status,
+    requiresApproval: validatedAction.requiresApproval,
+  },
+});
 
   return validatedAction;
 }

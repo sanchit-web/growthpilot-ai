@@ -15,6 +15,7 @@ model GrowthAction {
   suggestedProduct String?
   status           String
   requiresApproval Boolean
+  executionResult   Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
