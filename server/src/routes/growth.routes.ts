@@ -58,11 +58,14 @@ router.post("/action", async (req, res) => {
 
 router.get("/actions", async (_req, res) => {
   try {
-    const actions = await prisma.growthAction.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+const actions = await prisma.growthAction.findMany({
+  include: {
+    payments: true,
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+});
 
     return res.status(200).json({
       success: true,
@@ -199,9 +202,6 @@ router.post("/action/:id/execute", async (req, res) => {
   data: {
     status: "EXECUTED",
     executionResult: result,
-
-    paymentLinkId: result.paymentLink?.id,
-    paymentStatus: result.paymentLink?.status,
   },
 });
 
@@ -223,13 +223,16 @@ router.post("/action/:id/execute", async (req, res) => {
 router.get("/recommendations", async (_req, res) => {
   try {
     const recommendations = await prisma.growthAction.findMany({
-      where: {
-        status: "EXECUTED",
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
-    });
+  where: {
+    status: "EXECUTED",
+  },
+  include: {
+    payments: true,
+  },
+  orderBy: {
+    updatedAt: "desc",
+  },
+});
 
     return res.status(200).json({
       success: true,

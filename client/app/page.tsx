@@ -16,8 +16,18 @@ type GrowthAction = {
   status: "PROPOSED" | "APPROVED" | "EXECUTED" | "REJECTED";
   requiresApproval: boolean;
 
-  paymentLinkId?: string | null;
-  paymentStatus?: string | null;
+  payments?: {
+  id: string;
+  razorpayPaymentId?: string | null;
+  razorpayOrderId?: string | null;
+  razorpayPaymentLinkId?: string | null;
+  amount: number;
+  currency: string;
+  status: "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED";
+  paidAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}[];
 
   createdAt: string;
   updatedAt: string;
@@ -275,18 +285,17 @@ export default function Home() {
       </p>
 
       {/* Payment Status */}
-      {action.paymentStatus && (
-        <div className="mt-4 rounded-lg bg-white p-3">
-          <p className="text-xs text-gray-400">
-            Payment Status
-          </p>
+      {action.payments && action.payments.length > 0 && (
+  <div className="mt-4 rounded-lg bg-white p-3">
+    <p className="text-xs text-gray-400">
+      Payment Status
+    </p>
 
-          <p className="mt-1 text-sm font-semibold text-gray-800">
-            {action.paymentStatus.toUpperCase()}
-          </p>
-        </div>
-      )}
-
+    <p className="mt-1 text-sm font-semibold text-gray-800">
+      {action.payments[0].status}
+    </p>
+  </div>
+)}
       {action.executionResult.recommendation && (
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
 

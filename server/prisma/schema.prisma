@@ -6,8 +6,15 @@ datasource db {
   provider = "postgresql"
 }
 
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
 model GrowthAction {
-  id               String   @id
+  id               String  @id
   actionType       String
   title            String
   description      String
@@ -15,11 +22,33 @@ model GrowthAction {
   suggestedProduct String?
   status           String
   requiresApproval Boolean
-  executionResult   Json?
+  executionResult  Json?
 
-  paymentLinkId    String?
-  paymentStatus    String?
+  payments Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id String @id @default(uuid())
+
+  growthActionId String
+  growthAction   GrowthAction @relation(fields: [growthActionId], references: [id], onDelete: Cascade)
+
+  razorpayPaymentId     String? @unique
+  razorpayOrderId       String?
+  razorpayPaymentLinkId String?
+
+  amount   Int
+  currency String
+
+  status PaymentStatus
+
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([growthActionId])
+  @@index([razorpayPaymentLinkId])
 }
